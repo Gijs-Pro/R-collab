@@ -1,0 +1,180 @@
+---
+title: "Zelfstudieopdracht - R, RStudio en RMarkdown"
+output: pdf_document
+---
+
+
+In deze zelfstudieopgave raak je bekend met R en R Markdown. Je hoeft de opdracht niet in te leveren.
+
+
+# 1. Van start gaan
+Alvorens te beginnen, moet je een RStudio Cloud account hebben gemaakt, of R en RStudio gedownload en geïnstalleerd hebben op je eigen computer. Zie Brightspace voor instructies. 
+
+Open nu het bestand Introductie_R.Rmd in RStudio, als je dat nog niet gedaan had. Als je vervolgens op "Knit PDF" in de balk boven de file klikt (misschien staat er aanvankelijk "Knit HMTL"; je kunt "PDF" kiezen met de muis), zet RStudio de .Rmd om in een .pdf file. Dit is precies de file die je nu leest. 
+
+# 2. Voorbeelden
+Ter introductie een aantal voorbeelden. Voor de meeste bekende verdelingen is in R alvast de *dichtheidsfunctie* $f$, 
+de *cumulatieve verdelingsfunctie* $x\mapsto F(x)=\mathbb P(X\le x)$, en de *kwantielfunctie* $\alpha\mapsto F^{-1}(\alpha)$ geimplementeerd. Het betreffende commando begint respectievelijk met een `d`, `p` of `q`. We illustreren dit nu voor een normale verdeling met parameters $\mu=2$ en $\sigma=3$. Het eerste argument is altijd het argument van de functie, gevolgd door de parameters. Hieronder staat wat R code in grijze blokken, zogeheten 'chunks'. 
+
+```{r, eval=FALSE}
+dnorm(0.5, 2, 3)
+``` 
+geeft de dichtheid in $x = 0.5$, en is dus gelijk aan
+$$\frac{1}{\sqrt{2\pi 3^2}}e^{-\frac{(0.5 - 2)^2}{2\cdot3^2}}.$$
+Inderdaad vinden we dat
+```{r}
+dnorm(0.5, 2, 3)-1/sqrt(2*pi*3^2)*exp(-(0.5-2)^2/(2*3^2))
+``` 
+
+```{r, eval=FALSE}
+pnorm(0.5, 2, 3)
+``` 
+geeft $\mathbb{P}(X \leq 0.5)$ voor $X \sim \mathcal{N}(2, 9)$.  
+
+```{r, eval=FALSE}
+pnorm(0.5, 2, 3, lower.tail = FALSE)
+``` 
+geeft $\mathbb{P}(X \geq 0.5)$, wat gelijk is aan $1 - \mathbb{P}(X \leq 0.5)$.
+
+```{r, eval=FALSE}
+qnorm(0.5, 2, 3)
+``` 
+geeft de waarde van $x$ zodanig dat $\mathbb{P}(X \leq x) = 0.5$. In dit geval is deze waarde gelijk aan de verwachtingswaarde, dus twee. 
+
+Je kunt een steekproef genereren door `r` voor de naam van de verdeling te zetten, bijvoorbeeld
+```{r}
+x <- runif(10,0,1)
+```
+maakt een steekproef met tien trekkingen uniform uit het interval $[0,1]$, of 
+```{r}
+x <- rnorm(100, 2, 3)
+``` 
+maakt een steekproef met honderd trekkingen uit een normale verdeling met verwachting $\mu = 2$ en standaarddeviatie $\sigma = 3$. De steekproef bevindt zich nu in de vector `x`, en je kan de waarden zien door te typen
+```{r}
+x
+```
+wat gegevens verkrijgen door te typen 
+```{r}
+summary(x)
+```
+en een histogram maken door te typen
+```{r, eval=FALSE}
+hist(x)
+```
+
+
+Met R  kun je ook plots van functies maken maken. Je kunt bijvoorbeeld eerst een vector `x` maken die de waarden $0, 1, \ldots, 10$ bevat  en dan een plot van de Poisson dichtheid met parameter $\lambda = 3$  met 
+```{r}
+x <- seq(0, 10, by = 1)
+plot(x, dpois(x, 3), type = "p")
+```
+
+Of misschien is deze mooier?
+```{r}
+plot(x, dpois(x,3), type = "s")
+```
+
+Tot slot laten we zien hoe je een barplot kunt maken. Eerst maken we een steekproef met 100 waarnemingen uit een binomiale verdeling.
+```{r}
+binom <- rbinom(100, size = 5, p = 0.6)
+binom
+table(binom)
+```
+
+De tabel geeft aan hoe vaak elke uitkomst is geobserveerd. We visualiseren dit met een barplot.
+```{r}
+barplot(table(binom))
+```
+
+
+# 3. Vragen
+Typ je antwoorden op onderstaande vragen onder elke vraag in de .Rmd-file. Niet alle benodigde informatie staat in deze opdracht gegeven, voor een aantal dingen zul je op internet op zoek moeten. Je zult zien dat er veel online hulp voor R beschikbaar is. Daarnaast kan het nuttig zijn om de documentatie te bekijken van R functies die je gaat gebruiken. Typ bijvoorbeeld 
+
+```{r, eval=FALSE}
+help("hist")
+```
+of
+```{r, eval=FALSE}
+?hist
+```
+om meer over \texttt{hist()} te lezen.
+
+**Vraag 1** De toevoeging 'eval=FALSE' die in enkele van bovenstaande chunks staat, is een zogeheten *chunk option*. Wat is het effect van het toevoegen van 'eval=FALSE' tussen de chunk options? 
+
+
+**Vraag 2** Zoek op welke chunk options er verder nog zijn, en beschrijf er twee die je handig lijken.
+
+**Vraag 3** Voeg hieronder een nieuwe chunk in, maak een histogram van 500 trekkingen uit een standaard normale verdeling, en zorg dat in het geknitte document de R-code niet zichtbaar is, maar het histogram wel.
+
+
+**Vraag 4** Maak drie vectoren met 100 trekkingen uit een normale verdeling met verwachtingswaarde gelijk aan respectievelijk 1, 2, en 3, en standaarddeviatie ook gelijk aan respectievelijk 1, 2 en 3. Bereken het gemiddelde en de variantie van elk van de vectoren. 
+
+**Vraag 5**  Wat is de theoretische verdeling van de som van de drie vectoren uit de vorige vraag?
+
+**Vraag 6** Bereken nu met R het gemiddelde en de variantie van de som van de drie vectoren uit vraag 5.
+
+**Vraag 7** Maak een vector van lengte 50, gevuld met alleen maar enen. Gebruik hiervoor \texttt{rep()}. 
+
+**Vraag 8** Maak een vector \texttt{x} van lengte 50, gevuld met de getallen 1 t/m 50, en een vector \texttt{y} die gelijk is aan tweemaal \texttt{x}. Maak met \texttt{plot()} een scatterplot van \texttt{x} en \texttt{y}.
+
+**Vraag 9** Als vraag 8, maar trek nu een lijn door de punten heen.
+
+**Vraag 10** Bereken de correlatie tussen \texttt{x} en \texttt{y} met behulp van R.
+
+**Vraag 11** Als vraag 8, maar tel nu een vector standaard normaal verdeelde variabelen op bij \texttt{y}. Bereken tevens de correlatie tussen \texttt{x} en de nieuwe vector. Waarom is het antwoord anders dan bij vraag 9?
+
+**Vraag 12** Beschrijf in woorden wat er in onderstaande code gebeurt.
+```{r}
+N <- 500
+n <- 5
+res <- rep(0, N)
+
+for(i in 1:N){
+  vector <- rnorm(n)
+  res[i] <- mean(vector)
+}
+
+hist(res)
+```
+
+
+NB Een andere manier om hetzelfde te bereiken is:
+
+```{r}
+N <- 500
+n <- 5
+
+obs <- matrix(rnorm(N*n), nrow = N)
+res <- apply(obs, 1, mean)
+hist(res)
+```
+
+
+**Vraag 13** Maak het histogram uit bovenstaande vraag opnieuw, nu zo dat het histogram precies 20 bins heeft. 
+
+
+
+**Vraag 14** Beschrijf wat in \texttt{pnorm()} het effect is van de keuze \texttt{lower.tail = TRUE} of juist \texttt{lower.tail = FALSE}.
+
+NB In de help is te zien dat \texttt{lower.tail = TRUE} de 'default' is. Als je die optie wil, hoef je dat niet expliciet te vermelden wanneer je de functie aanroept.
+
+**Vraag 15** Zij $q_{0.3}$ de waarde zodanig dat de kans dat een standaard normaal verdeelde variabele kleiner dan $q_{0.3}$ is, gelijk is aan 0.3. Gebruik \texttt{qnorm()} om de waarde $q_{0.3}$ te vinden.
+
+**Vraag 16** We maken een vector met 20 uniform verdeelde waarnemingen.
+```{r}
+obs <- runif(20)
+obs
+```
+
+Bekijk wat de volgende functies doen:
+```{r}
+min(obs)
+max(obs)
+which.min(obs)
+which.max(obs)
+obs[which.min(obs)]
+obs[which.max(obs)]
+```
+
+Gebruik nu de functie \texttt{which()} om de indices te vinden van de waarnemingen die groter dan 0.5 zijn. Gebruik deze indices vervolgens om de waarnemingen die groter dan 0.5 zijn te selecteren.
+
