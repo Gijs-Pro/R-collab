@@ -1,0 +1,37 @@
+---
+title: "IMS Homework assignment 1"
+subtitle: "Gijs Turkenburg (s3573532) and Sam Noordam (s...)"
+output:
+  pdf_document: default
+  html_document: default
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+In this document we will establish a suitable estimator for the rainfalls in the netherlands or something. bla bla bla
+
+## Visual representation
+
+We have our dataset maxrain, but how do we access it?
+
+```{r}
+load("maxrain.Rdata")
+as.table(maxrain)
+plot(maxrain)
+hist(maxrain, breaks = 20)
+```
+
+just like that!
+
+```{=latex}
+dit is een stukje tex code: kijken of het werkt
+
+\begin{align*}
+  \forall x \in X : \exists Y
+\end{align*}
+```
