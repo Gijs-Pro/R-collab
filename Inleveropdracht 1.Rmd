@@ -5,6 +5,8 @@ output:
   pdf_document: default
   html_document: default
 date: "`r Sys.Date()`"
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
@@ -21,12 +23,48 @@ We have our dataset maxrain, but how do we access it?
 
 ```{r}
 load("maxrain.Rdata")
-as.table(maxrain)
-plot(maxrain)
-hist(maxrain, breaks = 20)
+#splitst de data in de jaartallen en de waardes:
+data_splitser <- stack(maxrain)
 ```
 
-just like that!
+Nu verwerken we de vorm van de data tot een mooie vector met de jaren er in, en een vector met de waardes er in
+
+```{r}
+#verwerken in nieuwe variabelen
+Values <- data_splitser$values
+Years <- data_splitser$ind
+print(Values)
+```
+
+Vervolgens kunnen we een histogram maken met hoe vaak deze waardes voorkomen:
+
+```{r}
+hist(Values, breaks = 50, freq = TRUE)
+```
+
+dit zijn wat histogrammen van ons
+
+```{r}
+lengte <- length(maxrain)
+verdelingBiom <- rbinom(1000, 200, 0.5)
+verdelingHypergeo <- rhyper(10000, 400, 399, 100)
+hist(verdelingHypergeo, breaks = 50, freq = TRUE)
+hist(verdelingBiom, breaks = 50, freq = TRUE)
+```
+
+Dit zijn wat extra dingen:
+
+```{r}
+
+#nu willen we een numeric vector van onze data, die de relatieve frequentie bevat:
+num_vector <- table(Values)/length(Values)
+
+# We kunnen een cdf bepalen:
+cdf <- cumsum(num_vector)
+
+# En deze plotten
+plot(names(table(Values)), cdf, type = "s", xlab = "Values", ylab = "F_n(x)", main = "CDF Plot")
+```
 
 ```{=latex}
 dit is een stukje tex code: kijken of het werkt
