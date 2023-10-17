@@ -1,12 +1,12 @@
 ---
 title: "IMS Homework assignment 1"
-subtitle: "Gijs Turkenburg (s3573532) and Sam Noordam (s...)"
+subtitle: "Gijs Turkenburg (s3573532) and Sam Noordam (s3680657)"
 output:
   pdf_document: default
   html_document: default
 date: "`r Sys.Date()`"
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -15,46 +15,228 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introduction
 
-In this document we will establish a suitable estimator for the rainfalls in the netherlands or something. bla bla bla
+In this document we will establish a suitable distribution to estimate the amount of rainfall in the netherlands. We will use the provided datasat "maxrain.Rdata", which contains the maximal hourly precipitation amount (in mm) measured within one year in De Bilt between 1906 and 2022. We will plot this data and try to find a distribution, where the parameters are estimated with the moment estimator. We will then plot our found distribution over our data to see if it matches, and based on the chosen distribution we will calculate the probability that a sewage system has to cope with more than 300 rain in one hour. We will finally compare this value with the empirical probability of the data set.
 
-## Visual representation
+## Ordering the data set
 
-We have our dataset maxrain, but how do we access it?
+Because our dataset has a structure we can't work with, we extract just the values of rainfall from every year:
 
 ```{r}
+#load the data into the program
 load("maxrain.Rdata")
-#splitst de data in de jaartallen en de waardes:
-data_splitser <- stack(maxrain)
+#seperate the rain into a parameter years and values, where we will use values
+data_splitser <- stack(maxrain) #contains seperated data
+values <- data_splitser$values #extracts the values
+years <- data_splitser$ind #extracts the years
+values <- na.omit(values) #finally we omit any incomplete cases, just in case
+typeof(values) #values has a "double" type
+is.vector(values) #values is indeed a vector, like we want it to be.
+length(values) #we later want to know how much data points we have
 ```
 
-Nu verwerken we de vorm van de data tot een mooie vector met de jaren er in, en een vector met de waardes er in
+We now have a vector "values" containing all the values we will use.
+
+## Designing our histogram
+
+We will now compute a histogram with this values vector.
 
 ```{r}
-#verwerken in nieuwe variabelen
-Values <- data_splitser$values
-Years <- data_splitser$ind
-print(Values)
+#we compute our first histogram to see what the data looks like
+hist(values, breaks = 20, freq = FALSE, main = "Histogram of our values vector"
+     ,xlab = "amount of rain in mm") #we choose 20 breaks arbitrarily
+
 ```
 
-Vervolgens kunnen we een histogram maken met hoe vaak deze waardes voorkomen:
+We can see a couple of things:
+
+1.  We have a (couple of) datapoint(s) that is really far from the rest, we would like to remove this outlier(s) to get a more accurate histogram,
+
+2.  The shape is not symmetrical, it seems to resemble a sort of wave: going up fast, peaking at around 120, and subsiding slowly,
+
+3.  The amount of bars we choose seems about right.
+
+We will first remove the outlier(s) by sorting our data and removing the highest value(s)
 
 ```{r}
-hist(Values, breaks = 50, freq = TRUE)
+#sort the values to see how many we need to remove
+sortedValues <- sort(values)
+print(sortedValues)
+
+#We see one outlier, 441, so we remove it from the data to create a vector new values:
+nValues <- values[values < max(values)]
 ```
 
-dit zijn wat histogrammen van ons
+Now we create a new histogram with our new vector, and we can see that we can work with this histogram.
 
 ```{r}
+#we choose 10 breaks because it makes a nice shape we can work with
+hist(nValues, breaks = 10, freq = FALSE, main = "Histogram of our nValues vector"
+     ,xlab = "amount of rain in mm") 
+```
+
+## Finding a distribution and calculating the moment estimator
+
+As previously stated, our distribution doesn't seem symmetrical, and peaks early and then slowly subsides. We have a couple of options to choose from:
+
+-   Frechet distribution: This distribution seems to match, however trying to find the moment esimator is very difficult so we opt for a different distribution,
+
+-   Gumbel distribution: This distribution also seems to match, however calculating with it seems too difficult,
+
+-   Negative-binomial: We opt for this distribution. It matches the shape and we can calculate with it
+
+For the calculations for the moment estimator we want to know the mean of our samples:
+
+```{r}
+#we calculate the mean by summing the values and dividing by the length of our set
+sumVals <- sum(nValues)
+dataMean <- 1/length(nValues) * sumVals
+print(dataMean)
+dataVar <- var(nValues)
+print(dataVar)
+```
+
+```{=latex}
+\newcommand{\bb}[1]{\mathbb{#1}}
+We can calculate the first and second moments of the negative binomial distribution using the booklet of distributions. We derive the formula for the second moment by using the standard formula $\text{var}(X) = \bb{E}(X)^2-\bb{E}(X^2)$. We get the following formula:
+\begin{align*}
+    \bb{E}\left(X^2\right)=\text{var}\left(X\right)+\bb{E}\left(X\right)^2.
+\end{align*}
+We find that the first and second moments are given by the following expressions
+\begin{align*}
+    \tag{1}\label{eq:1}
+    \bb{E}\left(X\right)&=\frac{r\left(1-p\right)}{p},\\
+    \bb{E}\left(X^2\right)&=\text{var}\left(X\right)+\bb{E}\left(X\right)^2\\
+    &=\frac{r\left(1-p\right)}{p^2}+\left(\frac{r\left(1-p\right)}{p}\right)^2\\
+    \tag{2}\label{eq:2}
+    &=\frac{\left(p-1\right)r\left(\left(p-1\right)r-1\right)}{p^{2}}
+\end{align*}
+We solve equation \eqref{eq:1} for $r$ in terms of $p$ and $\bb{E}\left(X\right)$:
+\begin{align*}
+    \bb{E}\left(X\right)&=\frac{r\left(1-p\right)}{p}\\
+    \iff p\cdot\bb{E}\left(X\right)&=r\left(1-p\right)\\
+    \iff\frac{p}{1-p}\cdot\bb{E}\left(X\right)&=r\\
+    \iff r&=\frac{p}{1-p}\cdot\bb{E}\left(X\right).
+\end{align*}
+By plugging in this expression for $r$ into equation \eqref{eq:2} we can derive a formula for $\bb{E}\left(X^2\right)$ solely in terms of $p$ and $\bb{E}\left(X\right)$:
+\begin{align*}
+    \bb{E}\left(X^2\right)&=\frac{\left(p-1\right)r\left(\left(p-1\right)r-1\right)}{p^{2}}\\
+    &=\frac{\left(p-1\right)\left(\frac{p}{1-p}\bb{E}\left(X\right)\right)\left(\left(p-1\right)\left(\frac{p}{1-p}E\left(X\right)\right)-1\right)}{p^{2}}\\
+    &=\frac{-p\bb{E}\left(X\right)\left(-p\bb{E}\left(X\right)-1\right)}{p^{2}}\\
+    &=\frac{\left(p\bb{E}\left(X\right)+1\right)\bb{E}\left(X\right)}{p}.
+\end{align*}
+We can rearrange this formula as follows:
+\begin{align*}
+    \bb{E}\left(X^2\right)&=\frac{\left(p\bb{E}\left(X\right)+1\right)\bb{E}\left(X\right)}{p}\\
+    p\bb{E}\left(X^2\right)&=\left(p\bb{E}\left(X\right)+1\right)\bb{E}\left(X\right)\\
+    p\bb{E}\left(X^2\right)&=p\bb{E}\left(X\right)^2+\bb{E}\left(X\right)\\
+    p\bb{E}\left(X^2\right)-p\bb{E}\left(X\right)^2&=\bb{E}\left(X\right)\\
+    p\left(\bb{E}\left(X^2\right)-\bb{E}\left(X\right)^2\right)&=\bb{E}\left(X\right)\\
+    p&=\frac{\bb{E}\left(X\right)}{\bb{E}\left(X^2\right)-\bb{E}\left(X\right)^2}.
+\end{align*}
+Which in turn gives us the following expression for $r$ in terms of $\bb{E}\left(X\right)$ and $\bb{E}\left(X^2\right)$:
+\begin{align*}
+    r&=\frac{p}{1-p}\cdot\bb{E}\left(X\right)\\
+    &=\frac{\frac{\bb{E}\left(X\right)}{\bb{E}\left(X^2\right)-\bb{E}\left(X\right)^2}}{1-\frac{\bb{E}\left(X\right)}{\bb{E}\left(X^2\right)-\bb{E}\left(X\right)^2}}\cdot\bb{E}\left(X\right)\\
+    &=\frac{\bb{E}\left(X\right)}{\bb{E}\left(X^2\right)-\bb{E}\left(X\right)^2-\bb{E}\left(X\right)}\cdot\bb{E}\left(X\right)\\
+    &=\frac{\bb{E}\left(X\right)^2}{\bb{E}\left(X^2\right)-\bb{E}\left(X\right)^2-\bb{E}\left(X\right)}.
+\end{align*}
+Therefore we have derived the following expressions for $p$ and $r$ solely in terms of the first and second moments:
+\begin{align*}
+    r&=\frac{\bb{E}\left(X\right)^2}{\bb{E}\left(X^2\right)-\bb{E}\left(X\right)^2-\bb{E}\left(X\right)},\\
+    p&=\frac{\bb{E}\left(X\right)}{\bb{E}\left(X^2\right)-\bb{E}\left(X\right)^2}.
+\end{align*}
+With the values calculated from the given data, we have
+\begin{align*}
+    \bb{E}\left(X\right)&\approx 5162.05835544\\
+    \bb{E}\left(X^2\right)&\approx 161.8448.
+\end{align*}
+This gives us the following values for $p$ and $r$:
+\begin{align*}
+    p&\approx 0.0356871090428\\
+    r&\approx 5.98952276201.
+\end{align*}
+
+```
+## Plotting and matching the distribution
+
+Now that we have estimated our parameters, we will compare the distribution to our data set
+
+```{r}
+hist(nValues, breaks = 10, freq = FALSE, main = "Histogram of our nValues vector
+      with our negative binomial distribution plotted over it"
+     ,xlab = "amount of rain in mm") #our histogram again
+points(1:500, dnbinom(1:500, 6, 0.0357), col="blue", pch=10)
+```
+
+We can see that the shape matches the shape of our data pretty well. Some things to note:
+
+-   The peak of the negative binomial distribution with our estimator parameters is slightly off compared to the peak in the data
+
+-   If you compare the length of the middle of each bar to the blue point plot, you will get an answer that is near 0.
+
+-   We should expect a lower probability when we do the calculation for +300mm rainfall, the points graph is under the bars of the histogram.
+
+## Probability for 300mm of rainfall and comparing with the empirical value 
+
+We will now compute the probability that the sewage system has to cope with more than 300mm of rain. We compute:
+
+```{r}
+print(1-pnbinom(300, 6, 0.0357))
+```
+
+So our probability is 0.0368 or about 3,68% according to our found negative binomial distribution.
+Now we will compare this value with the empirical probability, which we will compute:
+
+```{r}
+#we calculate the empirical probability for rainfall over 300mm
+vals_over_300_no_outlier <- sum(nValues > 300)
+emp_value_no_outlier <- vals_over_300_no_outlier/length(nValues)
+print(emp_value_no_outlier)
+```
+
+We get 0,0431 which is 4,31% and we see that this percentage is a bit higher, which checks out with the analysis of our chosen distribution and estimators. Also keep in mind that we chose to erase the outlier to get a cleaner histogram.
+
+```{r, eval=FALSE, result=FALSE, echo=FALSE}
+
 lengte <- length(maxrain)
 verdelingBiom <- rbinom(1000, 200, 0.5)
 verdelingHypergeo <- rhyper(10000, 400, 399, 100)
 hist(verdelingHypergeo, breaks = 50, freq = TRUE)
 hist(verdelingBiom, breaks = 50, freq = TRUE)
-```
 
-Dit zijn wat extra dingen:
 
-```{r}
+
+
+
+distr[2,as.numeric(names(table(nValues)))] <- table(nValues)/length(nValues)
+length(nValues)
+distr <- rbind(1:max(nValues), 0)
+distr[2,as.numeric(names(table(nValues)))] <- table(nValues)/length(nValues)
+
+hist(nValues, breaks = 30, freq = FALSE)
+hist(nValues, breaks=10, freq = FALSE)
+hist(rgumbel(1000, 114, 46), breaks = 20, freq = FALSE)
+
+
+hist(nValues - 59, breaks=10, freq = FALSE)
+min(nValues)
+verLogN <- rlnorm(1000, 0, 0.000001)
+hist(verLogN, breaks = 100)
+
+
+
+plot(getallenvector)
+
+newValues <- sort(Values)
+print(newValues)
+hist(newValues, breaks = 48, freq = TRUE)
+cumWaardes <- table(newValues)/length(newValues)
+sCumWaardes <- stack(cumWaardes)
+sCumWaardes
+valueCumWaardes <- sCumWaardes$values
+print(valueCumWaardes)
+
+
 
 #nu willen we een numeric vector van onze data, die de relatieve frequentie bevat:
 num_vector <- table(Values)/length(Values)
@@ -64,12 +246,11 @@ cdf <- cumsum(num_vector)
 
 # En deze plotten
 plot(names(table(Values)), cdf, type = "s", xlab = "Values", ylab = "F_n(x)", main = "CDF Plot")
-```
 
-```{=latex}
-dit is een stukje tex code: kijken of het werkt
 
-\begin{align*}
-  \forall x \in X : \exists Y
-\end{align*}
+distr <- rbind(1:333, 0) #we create a matrix with all the possible values from nValues
+justValues <- as.numeric(names(table(nValues))) #will just contain values, no duplicates
+distr[2, justValues] <- table(nValues)/length(nValues) #we insert the 
+plot(distr[1,],distr[2,],type="p")
+
 ```

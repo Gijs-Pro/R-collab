@@ -1,0 +1,42 @@
+---
+title: "IMS Inleveropdracht 2"
+output:
+  pdf_document: default
+  html_document: default
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Opdracht (later te verwijderen)
+
+We want to check whether the gas extraction from the Groningen gas field had some influence on the number of earthquakes in the Netherlands. The dataset Earthquakes.Rdata contains the number of yearly earthquakeswith a magnitude of 3.0 or larger on the Richter scale. It is based on the recordings of the KMNI: <https://dataplatform.knmi.nl/dataset/preview/> aardbevingen-catalogus-1. [In contrast to the KMNI, I counted earth- quakes which happened within 3 days as one.] We want to model the num-ber of yearly earthquakes before the start of the gas extraction (1900-1962) and during the gas extraction (1963-2022) individually. Find statistical models for both time periods. Try to use the same family of distributions1, but allow for different parameters. [In this case we can easily compare the estimated models by comparing the estimated parameters, see Example 3.8] Calculate the maximum likelihood estimator for your model and com- pute the mean squared error of your estimator. Construct also two-sided asymptotic 0.95 confidence intervals for your parameters. For most rea- sonable distributions you can calculate ML-estimator, MSE and CI's the- oretically. If this seems to difficult, you can numerically maximize your log-likelihood (see Example 1.16), simulate the MSE for some values of the parameters by a Monte Carlo simulation (see Example 1.12) and simulate bootstrap confidence intervals (see Example 1.16). What is your conclusion about the influence of the gas extraction?
+
+## Introduction
+
+Earthquakes are .....
+
+## Organizing the data
+
+We have a data set available to us that ......
+
+```{r}
+load("Earthquakes2.Rdata")
+sep_data <- stack(Data) #seperates the data from our data file
+all_values <- sep_data$values #seperates just the values into a vector
+prior_gas_values <- all_values[1:63] #data from the years prior to gas extraction 
+post_gas_values <- all_values[64:123] #data from the years after gas extraction began
+print(prior_gas_values)
+print(post_gas_values)
+```
+
+## The histograms:
+
+```{r, figures-side, fig.show="hold", out.width="50%"}
+hist1 <- hist(prior_gas_values, freq = FALSE, breaks = c(0:7), main = "Histogram of our prior_gas_values vector"
+     ,xlab = "amount of earthquakes", xlim = range(c(prior_gas_values,post_gas_values)), ylim = c(0,1))
+hist2 <- hist(post_gas_values, freq = FALSE, breaks = c(0:7), main = "Histogram of our post_gas_values vector"
+     ,xlab = "amount of earthquakes", xlim = range(c(prior_gas_values,post_gas_values)), ylim = c(0,1))
+```

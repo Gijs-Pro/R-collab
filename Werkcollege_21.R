@@ -1,11 +1,16 @@
 load("norain.Rdata")
 print(norain)
+rbind(1:30,0)
 distr <- rbind(1:30,0)
+distr
 print(length(norain))
 print(table(norain)/length(norain))
+table(norain)
 distr[2,as.numeric(names(table(norain)))] <- table(norain)/length(norain)
-
 plot(distr[1,],distr[2,],type="h")
+
+typeof(distr[2,])
+distr[2,]
 points(1:30,dpois(1:30,11),col="blue",pch=19)
 
 points(1:30,dnbinom(1:30,144/5,12/17),col="red",pch=19)
