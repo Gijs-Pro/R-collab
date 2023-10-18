@@ -4,6 +4,8 @@ output:
   pdf_document: default
   html_document: default
 date: "`r Sys.Date()`"
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -28,15 +30,119 @@ sep_data <- stack(Data) #seperates the data from our data file
 all_values <- sep_data$values #seperates just the values into a vector
 prior_gas_values <- all_values[1:63] #data from the years prior to gas extraction 
 post_gas_values <- all_values[64:123] #data from the years after gas extraction began
-print(prior_gas_values)
-print(post_gas_values)
 ```
 
 ## The histograms:
 
-```{r, figures-side, fig.show="hold", out.width="50%"}
-hist1 <- hist(prior_gas_values, freq = FALSE, breaks = c(0:7), main = "Histogram of our prior_gas_values vector"
+```{r, eval=FALSE}
+hist1 <- hist(prior_gas_values, freq = FALSE, right = FALSE, breaks = c(0:8), main = "Histogram of our prior_gas_values vector"
+     ,xlab = "amount of earthquakes", xlim = range(c(prior_gas_values,post_gas_values+1)), ylim = c(0,1))
+hist2 <- hist(post_gas_values, freq = FALSE, right = FALSE, breaks = c(0:8), main = "Histogram of our post_gas_values vector"
+     ,xlab = "amount of earthquakes", xlim = range(cq(prior_gas_values,post_gas_values+1)), ylim = c(0,1))
+```
+
+## The point graphs
+
+We want to make a point graph for both data sets with the x-axis being all the possible values (in our case 0-7) and the y-axis being the density of every point.
+
+```{r, figures-side, fig.show="hold"}
+par(mfrow=c(1, 2))
+#First we need to know some information, like the maximum amount of earthquakes to plot
+max_amount = max(prior_gas_values, post_gas_values)
+#we generate a table from the prior_gas_values vector
+prior_freqs_table <- table(factor(prior_gas_values, levels = 0:max(prior_gas_values)))/length(prior_gas_values)
+prior_freqs_table
+prior_freqs <- stack(prior_freqs_table)$values #this will be our y-axis vector
+prior_x <- c(0:(length(prior_freqs)-1)) #this will be our x-axis vector
+#we generate a table from the post_gas_values vector
+post_freqs_table <- table(factor(post_gas_values, levels = 0:max(post_gas_values)))/length(post_gas_values)
+stack(post_freqs_table)
+post_freqs <- stack(post_freqs_table)$values #this will be our y-axis vector
+post_x <- c(0:(length(post_freqs)-1)) #this will be our x-axis vector
+length(prior_freqs)
+length(prior_x)
+length(post_freqs)
+length(post_x)
+# Create a blank plot
+plot1 <- plot(x = 1,
+     type = "n",
+     xlim = c(0, max_amount), 
+     ylim = c(0, 1),
+     pch = 16,
+     xlab = "Earthquakes", 
+     ylab = "Density",
+     main = "Plot for prior_gas_values")
+points1 <- points(prior_x, prior_freqs, pch = 16, lwd = 1, col = "red")
+segments1 <- segments(x0 = prior_x, y0 = 0, x1 = prior_x, y1 = prior_freqs, col = "red")
+plot2 <- plot(x = 1,
+     type = "n",
+     xlim = c(0, max_amount), 
+     ylim = c(0, 1),
+     pch = 16,
+     xlab = "Earthquakes", 
+     ylab = "Density",
+     main = "Plot for post_gas_values")
+points2 <- points(post_x, post_freqs, pch = 16, lwd = 1, col = "blue")
+segments2 <- segments(x0 = post_x, y0 = 0, x1 = post_x, y1 = post_freqs, col = "blue")
+```
+
+
+Calculating the mean:
+
+```{r}
+mean_prior <- sum(prior_gas_values)/63
+mean_post <- sum(post_gas_values)/63
+print(mean_prior)
+print(mean_post)
+```
+
+
+```{r}
+par(mfrow=c(1, 2))
+?points
+#we plot the Poisson distribution over the previous plots.
+pois_prior_values <- rpois(1000, 0.4285714)
+pois_prior_freqs_table <- table(factor(pois_prior_values, levels = 0:max(pois_prior_values)))/length(pois_prior_values)
+pois_prior_freqs <- stack(pois_prior_freqs_table)$values
+pois_prior_x <- c(0:(length(pois_prior_freqs)-1))
+
+pois_post_values <- rpois(1000, 1.825397)
+pois_post_freqs_table <- table(factor(pois_post_values, levels = 0:max(pois_post_values)))/length(pois_post_values)
+pois_post_freqs <- stack(pois_post_freqs_table)$values
+pois_post_x <- c(0:(length(pois_post_freqs)-1))
+
+plot3 <- plot(x = 1,
+     type = "n",
+     xlim = c(0, max_amount),
+     ylim = c(0, 1),
+     pch = 16,
+     xlab = "Earthquakes",
+     ylab = "Density",
+     main = "pois_prior & prior_gas_values")
+points1 <- points(prior_x, prior_freqs, pch = 16, lwd = 1, col = "red")
+segments1 <- segments(x0 = prior_x, y0 = 0, x1 = prior_x, y1 = prior_freqs, col = "red")
+points3 <- points(pois_prior_x, pois_prior_freqs, pch = 0, lwd = 1, col = "black")
+
+plot2 <- plot(x = 1,
+     type = "n",
+     xlim = c(0, max_amount), 
+     ylim = c(0, 1),
+     pch = 16,
+     xlab = "Earthquakes", 
+     ylab = "Density",
+     main = "pois_post & post_gas_values")
+points2 <- points(post_x, post_freqs, pch = 16, lwd = 1, col = "blue")
+segments2 <- segments(x0 = post_x, y0 = 0, x1 = post_x, y1 = post_freqs, col = "blue")
+points4 <- points(pois_post_x, pois_post_freqs, pch = 0, lwd = 1, col = "black")
+```
+
+some text after
+```{r, eval=FALSE, echo = FALSE}
+sample1 <- c(0,1, 1, 2, 3, 4)
+sample2 <- c(0,1, 2, 3, 4, 4)
+
+hist1 <- hist(sample1, freq = FALSE, breaks = c(0:7), main = "Histogram of sample1"
      ,xlab = "amount of earthquakes", xlim = range(c(prior_gas_values,post_gas_values)), ylim = c(0,1))
-hist2 <- hist(post_gas_values, freq = FALSE, breaks = c(0:7), main = "Histogram of our post_gas_values vector"
+hist2 <- hist(sample2, freq = FALSE, breaks = c(0:7), main = "Histogram of sample2"
      ,xlab = "amount of earthquakes", xlim = range(c(prior_gas_values,post_gas_values)), ylim = c(0,1))
 ```
