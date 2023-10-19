@@ -12,59 +12,48 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Opdracht (later te verwijderen)
-
-We want to check whether the gas extraction from the Groningen gas field had some influence on the number of earthquakes in the Netherlands. The dataset Earthquakes.Rdata contains the number of yearly earthquakeswith a magnitude of 3.0 or larger on the Richter scale. It is based on the recordings of the KMNI: <https://dataplatform.knmi.nl/dataset/preview/> aardbevingen-catalogus-1. [In contrast to the KMNI, I counted earth- quakes which happened within 3 days as one.] We want to model the num-ber of yearly earthquakes before the start of the gas extraction (1900-1962) and during the gas extraction (1963-2022) individually. Find statistical models for both time periods. Try to use the same family of distributions1, but allow for different parameters. [In this case we can easily compare the estimated models by comparing the estimated parameters, see Example 3.8] Calculate the maximum likelihood estimator for your model and com- pute the mean squared error of your estimator. Construct also two-sided asymptotic 0.95 confidence intervals for your parameters. For most rea- sonable distributions you can calculate ML-estimator, MSE and CI's the- oretically. If this seems to difficult, you can numerically maximize your log-likelihood (see Example 1.16), simulate the MSE for some values of the parameters by a Monte Carlo simulation (see Example 1.12) and simulate bootstrap confidence intervals (see Example 1.16). What is your conclusion about the influence of the gas extraction?
 
 ## Introduction
 
-Earthquakes are .....
+The goal of this statistical experiment is to determine whether the gas extraction from the Groningen gas field has some influence on the number of earthquakes in the Netherlands. This is accomplished by finding two model for a data set containing all earthquakes with a magnitude of 3.0 or larger on the Richter scale, where earthquakes that happen within 3 days of each other count as one. One model will contain all the data from the years before the gas extraction (1900-1962), the other model will contain all the data from the years after (1963-2022). The goal is to find a ML-estimator for both models, where the same family of distribution is used for both models. After that a mean squared error will be computed, and finally a confidence interval will be given.
 
 ## Organizing the data
 
-We have a data set available to us that ......
+The available data is first organised so it can be used to calculate with.
 
 ```{r}
-setwd("C:\\Users\\Sam\\Desktop\\Coding\\Rstudio")
-load("Earthquakes2.Rdata")
+#setwd("C:\\Users\\Sam\\Desktop\\Coding\\Rstudio")
+load("Earthquakes2.Rdata") #loading the data
 sep_data <- stack(Data) #seperates the data from our data file
 all_values <- sep_data$values #seperates just the values into a vector
 prior_gas_values <- all_values[1:63] #data from the years prior to gas extraction 
 post_gas_values <- all_values[64:123] #data from the years after gas extraction began
 ```
 
-## The histograms:
-
-```{r, eval=FALSE}
-hist1 <- hist(prior_gas_values, freq = FALSE, right = FALSE, breaks = c(0:8), main = "Histogram of our prior_gas_values vector"
-     ,xlab = "amount of earthquakes", xlim = range(c(prior_gas_values,post_gas_values+1)), ylim = c(0,1))
-hist2 <- hist(post_gas_values, freq = FALSE, right = FALSE, breaks = c(0:8), main = "Histogram of our post_gas_values vector"
-     ,xlab = "amount of earthquakes", xlim = range(cq(prior_gas_values,post_gas_values+1)), ylim = c(0,1))
-```
-
 ## The point graphs
 
-We want to make a point graph for both data sets with the x-axis being all the possible values (in our case 0-7) and the y-axis being the density of every point.
+A point graph for both data sets with the x-axis being all the possible values (in our case 0-7) and the y-axis being the density of every point is created to visually establish what family of distributions could be used.
 
 ```{r, figures-side, fig.show="hold"}
 par(mfrow=c(1, 2))
 #First we need to know some information, like the maximum amount of earthquakes to plot
 max_amount = max(prior_gas_values, post_gas_values)
+
 #we generate a table from the prior_gas_values vector
-prior_freqs_table <- table(factor(prior_gas_values, levels = 0:max(prior_gas_values)))/length(prior_gas_values)
-prior_freqs_table
+prior_freqs_table <- 
+  table(factor(prior_gas_values, 
+               levels = 0:max(prior_gas_values)))/length(prior_gas_values)
 prior_freqs <- stack(prior_freqs_table)$values #this will be our y-axis vector
 prior_x <- c(0:(length(prior_freqs)-1)) #this will be our x-axis vector
+
 #we generate a table from the post_gas_values vector
-post_freqs_table <- table(factor(post_gas_values, levels = 0:max(post_gas_values)))/length(post_gas_values)
-stack(post_freqs_table)
+post_freqs_table <- 
+  table(factor(post_gas_values, 
+               levels = 0:max(post_gas_values)))/length(post_gas_values)
 post_freqs <- stack(post_freqs_table)$values #this will be our y-axis vector
 post_x <- c(0:(length(post_freqs)-1)) #this will be our x-axis vector
-length(prior_freqs)
-length(prior_x)
-length(post_freqs)
-length(post_x)
-# Create a blank plot
+
+# We create a blank plot
 plot(x = 1,
      type = "n",
      xlim = c(0, max_amount), 
@@ -73,8 +62,11 @@ plot(x = 1,
      xlab = "Earthquakes", 
      ylab = "Density",
      main = "Plot for prior_gas_values")
+#Now we plot the points over it
 points(prior_x, prior_freqs, pch = 16, lwd = 1, col = "red")
 segments(x0 = prior_x, y0 = 0, x1 = prior_x, y1 = prior_freqs, col = "red")
+
+#We create another blank plot
 plot(x = 1,
      type = "n",
      xlim = c(0, max_amount), 
@@ -83,34 +75,52 @@ plot(x = 1,
      xlab = "Earthquakes", 
      ylab = "Density",
      main = "Plot for post_gas_values")
+#And we plot the points over it
 points(post_x, post_freqs, pch = 16, lwd = 1, col = "blue")
 segments(x0 = post_x, y0 = 0, x1 = post_x, y1 = post_freqs, col = "blue")
 ```
 
+## The chosen distribution
+___reason why we choose the poisson distribution___
+
+## Determining the ML-estimators
+
+___latex stuff___
 
 Calculating the mean:
 
 ```{r}
-mean_prior <- sum(prior_gas_values)/63
+#(could also be done with the mean function)
+mean_prior <- sum(prior_gas_values)/63 
 mean_post <- sum(post_gas_values)/63
-print(mean_prior)
+#printing the means to use in our calculations
+print(mean_prior) 
 print(mean_post)
 ```
 
+___latex stuff___
+
+## Updating the point graphs
 
 ```{r}
 par(mfrow=c(1, 2))
 #we plot the Poisson distribution over the previous plots.
+#First we establish the points for both Poisson distributions
 pois_prior_values <- rpois(100000, 0.4285714)
-pois_prior_freqs_table <- table(factor(pois_prior_values, levels = 0:max(pois_prior_values)))/length(pois_prior_values)
+pois_prior_freqs_table <- 
+  table(factor(pois_prior_values, 
+               levels = 0:max(pois_prior_values)))/length(pois_prior_values)
 pois_prior_freqs <- stack(pois_prior_freqs_table)$values
 pois_prior_x <- c(0:(length(pois_prior_freqs)-1))
 
 pois_post_values <- rpois(100000, 1.825397)
-pois_post_freqs_table <- table(factor(pois_post_values, levels = 0:max(pois_post_values)))/length(pois_post_values)
+pois_post_freqs_table <- 
+  table(factor(pois_post_values, 
+               levels = 0:max(pois_post_values)))/length(pois_post_values)
 pois_post_freqs <- stack(pois_post_freqs_table)$values
 pois_post_x <- c(0:(length(pois_post_freqs)-1))
 
+#Create another blank plot for our prior values and the Poisson values
 plot(x = 1,
      type = "n",
      xlim = c(0, max_amount),
@@ -122,11 +132,8 @@ plot(x = 1,
 points(prior_x, prior_freqs, pch = 16, lwd = 1, col = "red")
 segments(x0 = prior_x, y0 = 0, x1 = prior_x, y1 = prior_freqs, col = "red")
 points(pois_prior_x, pois_prior_freqs, pch = 0, lwd = 1, col = "black")
-difference_prior <- ( prior_freqs - pois_prior_freqs[1:length(prior_freqs)] )^2
-difference_prior
-mse_prior <- mean(difference_prior) 
-mse_prior
 
+#Create another blank plot for our post values and the Poisson values
 plot(x = 1,
      type = "n",
      xlim = c(0, max_amount), 
@@ -138,26 +145,35 @@ plot(x = 1,
 points(post_x, post_freqs, pch = 16, lwd = 1, col = "blue")
 segments(x0 = post_x, y0 = 0, x1 = post_x, y1 = post_freqs, col = "blue")
 points(pois_post_x, pois_post_freqs, pch = 0, lwd = 1, col = "black")
+```
+
+## Computing the mean squared errors
+The difference between the prior frequencies and the poisson prior frequencies is squared for all available points. Then the mean is taken which results in the mean squared error for the model. The same is done for the post gast extraction data.
+```{r}
+difference_prior <- ( prior_freqs - pois_prior_freqs[1:length(prior_freqs)] )^2
+mse_prior <- mean(difference_prior) 
+print(mse_prior)
 
 difference_post <- ( post_freqs - pois_post_freqs[1:length(post_freqs)] )^2
-difference_post
 mse_post <- mean(difference_post) 
-mse_post
+print(mse_post)
 ```
 
-some text after
-```{r, eval=FALSE, echo = FALSE}
-sample1 <- c(0,1, 1, 2, 3, 4)
-sample2 <- c(0,1, 2, 3, 4, 4)
+## calculating the confidence intervals
+"Construct also two-sided asymptotic 0.95 confidence intervals for your parameters"
+In this section the two-sided asymptotic 0.95 confidence interval for both of our parameters is calculated.
+___latex stuff___
 
-hist1 <- hist(sample1, freq = FALSE, breaks = c(0:7), main = "Histogram of sample1"
-     ,xlab = "amount of earthquakes", xlim = range(c(prior_gas_values,post_gas_values)), ylim = c(0,1))
-hist2 <- hist(sample2, freq = FALSE, breaks = c(0:7), main = "Histogram of sample2"
-     ,xlab = "amount of earthquakes", xlim = range(c(prior_gas_values,post_gas_values)), ylim = c(0,1))
-```
 
-Bootstrap
 ```{r}
+#final calculation?
+```
+
+## Final conclusion
+"What is your conclusion about the influence of the gas extraction?"
+
+```{r, eval=FALSE, echo = FALSE}
+#bootstrap
 k <- 1000
 priorVec <- numeric(k)
 postVec <- numeric(k)
@@ -179,3 +195,20 @@ postRight <- postVec[k-floor((0.05/2) * k)]
 print(paste("CI for prior gas values with ",  k, " simulutaions: (", priorLeft, ",", priorRight, ")"))
 print(paste("CI for post gas values with ",  k, " simulutaions: (", postLeft, ",", postRight, ")"))
 ```
+
+
+```{r, eval=FALSE, echo = FALSE}
+sample1 <- c(0,1, 1, 2, 3, 4)
+sample2 <- c(0,1, 2, 3, 4, 4)
+
+hist1 <- hist(sample1, freq = FALSE, breaks = c(0:7), main = "Histogram of sample1"
+     ,xlab = "amount of earthquakes", xlim = range(c(prior_gas_values,post_gas_values)), ylim = c(0,1))
+hist2 <- hist(sample2, freq = FALSE, breaks = c(0:7), main = "Histogram of sample2"
+     ,xlab = "amount of earthquakes", xlim = range(c(prior_gas_values,post_gas_values)), ylim = c(0,1))
+
+hist1 <- hist(prior_gas_values, freq = FALSE, right = FALSE, breaks = c(0:8), main = "Histogram of our prior_gas_values vector"
+     ,xlab = "amount of earthquakes", xlim = range(c(prior_gas_values,post_gas_values+1)), ylim = c(0,1))
+hist2 <- hist(post_gas_values, freq = FALSE, right = FALSE, breaks = c(0:8), main = "Histogram of our post_gas_values vector"
+     ,xlab = "amount of earthquakes", xlim = range(cq(prior_gas_values,post_gas_values+1)), ylim = c(0,1))
+```
+
