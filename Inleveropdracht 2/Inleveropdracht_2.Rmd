@@ -1,5 +1,6 @@
 ---
 title: "IMS Inleveropdracht 2"
+subtitle: "by Gijs Turkenburg (s3573532) and Sam Noordam (s3680657)"
 output:
   pdf_document: default
   html_document: default
@@ -260,6 +261,10 @@ print(paste("CI for post gas values: (", post_left, ",", post_right, ")"))
 ## Final conclusion
 
 With the creation of these models, it can be concluded that the amount of earthquakes after 1962, when gas extraction began in Groningen, has increased. This is based on multiple observations, starting with the fact that the calculated confidence intervals don't overlap. The fact that these intervals are disjoint means that the two data sets can be seen as independent, meaning that there should be a reason for the increase (which is likely because of the gas extraction that began in 1963). This increase can also be observed by looking at the means. There is an increase of more than 400% from the data prior to 1963 and after. Also, the comparison to the Poisson distributions (which has low mean square errors, so they are quite accurate) yielded in a higher parameter for the data set from after 1962. This parameter is the mean of the Poisson distribution, which means that an increase can also be seen with this method.
+
+## Sources
+
+For this assignment the handbook of distributions has been used to determine the family of distributions that was used, and for the density function of the Poisson distribution.
 
 ```{r, eval=FALSE, echo = FALSE}
 #bootstrap
