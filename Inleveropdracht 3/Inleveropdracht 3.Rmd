@@ -58,6 +58,8 @@ for(i in 1:length(FastFood$NewJersey)){#iterating over the list
     dataFTE$njDiff <- c(dataFTE$njDiff, FastFood$FTEafter[i] - FastFood$FTEbefore[i])
   }
 }
+print(pennCounter)
+print(njCounter)
 #an element in our dataset can be accessed by dataFTE$datatype[rownumber]
 ```
 ## Visualising the data
@@ -80,7 +82,7 @@ plot(x = 1,
      main = "Plot for Pennsylvania FTE comparison, sorted")
 points(pennBeforeSorted, pch = 16, lwd = 1, col = "red")
 points(pennAfterSorted, pch = 16, lwd = 1, col = "blue")
-arrows(x0 = (1:pennCounter), y0 = pennBeforeSorted, x1 = (1:pennCounter), y1 = pennAfterSorted, col = "black", length = 0.07)
+suppressWarnings({arrows(x0 = (1:pennCounter), y0 = pennBeforeSorted, x1 = (1:pennCounter), y1 = pennAfterSorted, col = "black", length = 0.07)})
 
 #plot for the New Jersey data
 max_nj <- max(dataFTE$njBefore, dataFTE$njAfter)
@@ -98,7 +100,7 @@ plot(x = 1,
      main = "Plot for New Jersey FTE comparison, sorted")
 points(njBeforeSorted, pch = 16, lwd = 1, col = "red")
 points(njAfterSorted, pch = 16, lwd = 1, col = "blue")
-arrows(x0 = (1:njCounter), y0 = njBeforeSorted, x1 = (1:njCounter), y1 = njAfterSorted, col = "black", length = 0.07)
+suppressWarnings({arrows(x0 = (1:njCounter), y0 = njBeforeSorted, x1 = (1:njCounter), y1 = njAfterSorted, col = "black", length = 0.07)})
 
 ```
 
@@ -118,7 +120,7 @@ plot(x = 1,
      ylim = c(min(njDiffSorted), max(njDiffSorted)),
      pch = 16,
      xlab = "Store (normalised for the smaller dataset)", 
-     ylab = "FTE")
+     ylab = "FTE differences")
 title(
   main = paste("Plot where blue represents the difference \nin ", blue_name , "store FTE and red represents the difference \nin", red_name, "store FTE between March 1992 and December 1992."),
   cex.main = 0.8  # You can adjust the value as needed
@@ -134,12 +136,57 @@ if(njCounter > pennCounter){
 segments(x0 = 0, y0 = 0, x1 = max(njCounter, pennCounter), y1 = 0)
 ```
 
-## Final conclusion
-...
+From our data we can clearly see that the red datapoints are (almost) always below the blue datapoints, which will be our motivation to test if raising the minimum wage does have an impact on the amount of FTE, since it looks like not raising the minimum wage (which is represented by the red points) results in a bigger decline of FTE (even when the amount of FTE increased in the year 1992, the red dots show that the amount increased less). Finally, we plot this data in two histograms/
+```{r, figures-side, fig.show="hold"}
+par(mfrow=c(1, 2))
+pennHist <- hist(dataFTE$pennDiff, freq = FALSE, breaks = 6, main = "Histogram of pennDiff", xlim = c(-60,40), ylim = c(0, 0.045)
+     ,xlab = "Difference in FTE")
+njHist <- hist(dataFTE$njDiff, freq = FALSE, breaks = 6, main = "Histogram of njDiff", xlim = c(-60,40), ylim = c(0, 0.045)
+     ,xlab = "Difference in FTE")
+```
+
+## Researching the amount of employees: Choosing the test
+We need to test on the null hypothesis $H_0$ that says that there is no difference between the two datasets. First we have to make a decision to either use a parametric test, or use a non-parametric test. Because we have limited datapoints (one of our datasets only has 76 samples) and parametric test rely on convergence which will be inaccurate with our smaller dataset, we choose a non-parametric test. Note that we have a different amount of samples for the New Jersey data and the Pennsylvania data, so we can't use tests that rely on paired samples. When we look at the histograms generated, we can see that they don't really reassemble a normal distribution. Sure, they have a clear mean and some sort of variance, however the tails on both sides differ (in both histograms). Because we aren't really close to a normal distribution (where if we were we could choose a test like the two-sample t-test), we want to choose a test that takes inconsistent tails into account. Also the graphs still have the same shape, this would mean that doing a median-based test would work. This leads us to choose a Wilcoxin rank-sum test. This test is median based, and can be used on distributions that have inconsistent tails, but still the same shape. One last motivation is that, looking back at the point plot, we clearly want to show that the difference between differences almost always results in the blue difference being higher. This can also be linked tot the behavior of the median of both differences.
+
+## Researching the amount of employees: The Wilcoxin rank-sum test
+
+We will use the Wilcoxin rank-sum test as a permutation test. Our $H_0$ (null hypothesis) is that $F_X = F_Y$, where the distribution on $(X_1, ... , X_76)$ ( representing the Pennsylvania stores) has a distribution function $F_X$ and $(Y_1, ..., Y_)$ (representing the New Jersey stores) has a distribution function $F_X$. Our $H_1$ (the alternative hypothesis) is that $F_X \neq F_Y$. We know that there are
+```{r}
+choose(pennCounter + njCounter, pennCounter)#we choose pennCounter as k, 
+                                            #as this is the smallest value
+```
+, which will be our $\mathcal{X}_1, ... , \mathcal{X}_m$. Then, following the definition of the two-sample permutation test, we denote $\mathcal{Y}_1, ..., \mathcal{Y}_m$ as the respective unselected random variables. We can reject $H_0$ if $t(\mathcal{X}, \mathcal{Y} < t_{1 + \lfloor\alpha m\rfloor})$ or $t(\mathcal{X}, \mathcal{Y}) > t_{m-\lfloor \alpha m \rfloor}$.
+Because the amount of combinations is too high, we select randomly $10^7$ out of all the combinations.
+```{r}
+tstat <- numeric(10^6)
+for (i in 1:10^6) {
+    Index <- sample(1 : (pennCounter + njCounter), pennCounter)
+    X <- c(dataFTE$pennDiff, dataFTE$njDiff)[Index]
+    Y <- c(dataFTE$pennDiff, dataFTE$njDiff)[-Index]
+    tstat[i] <- sum(rank(c(X,Y))[1:pennCounter])
+  }
+tst <- sum(rank(c(dataFTE$pennDiff, dataFTE$njDiff))[1:pennCounter])
+sort(tstat)[1+floor(10^6*0.05)]
+sort(tstat)[10^6-floor(10^6*0.05)]
+min(mean(tst <= tstat), mean(tst >= tstat))*2
+```
+
+
+## Researching the amount of employees: Conclusions
+
+## Researching the business closures: Choosing the test
+
+## Reaserching the business closures: ...
+
+## Researching the business closures: Conclusions
+
+## Final conclusions
 
 ## Sources
 
-For this assignment the handbook of distributions has been used to determine the family of distributions that was used, and for the density function of the Poisson distribution.
+For this assignment the handbook of distributions has been used to determine the family of distributions that was used, and for the density function of the Poisson distribution. The following page has also been used in the decision to choose the Wilcoxin rank-sum test:
+Wikipedia contributors. (2023, September 7). Mann–Whitney U test. In Wikipedia, The Free Encyclopedia. Retrieved 16:05, November 8, 2023, from https://en.wikipedia.org/w/index.php?title=Mann%E2%80%93Whitney_U_test&oldid=1174323392
+
 
 ```{r, eval=FALSE, echo = FALSE}
 #bootstrap
